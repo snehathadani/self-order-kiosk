@@ -1,8 +1,8 @@
-import { Avatar, Box, CircularProgress, Grid, List, ListItem } from '@material-ui/core';
+import { Avatar, Box, Card, CardActionArea, CardContent, CardMedia, CircularProgress, Grid, List, ListItem, Typography } from '@material-ui/core';
 import { AddAlert } from '@material-ui/icons';
 import { Alert } from '@material-ui/lab';
-import React, { useContext, useEffect } from 'react'
-import { listCategories } from '../actions';
+import React, { useContext, useEffect, useState } from 'react'
+import { listCategories, listProducts } from '../actions';
 import Logo from '../components/Logo';
 import { Store } from '../Store';
 import { useStyles } from '../styles'
@@ -15,15 +15,26 @@ Then inside the main box create a Grid container. This Grid has 2 columns 1st co
 Then fill categories for backend inside Grid, for that make a List*/
 
 export default function OrderScreen () {
-    console.log("called once")
+    //console.log("called once")
+    const [categoryName, setCategoryName] = useState('')
     const styles = useStyles();
     const {state, dispatch} = useContext(Store)
     const {categories, loading, error} = state.categoryList;
+    const {products, loading:loadingProducts, error: errorProducts} = state.productList
     console.log(state)
     useEffect(()=> {
         console.log("uuuu")
-        listCategories(dispatch)
-    }, [dispatch])
+        if(!categories){
+          listCategories(dispatch);
+        } else {
+          listProducts(dispatch, categoryName)
+        }
+       
+    }, [dispatch, categoryName, categories])
+    const  categoryHandler = (name) => {
+      setCategoryName(name)
+      listProducts(dispatch, categoryName) //dispatch comes from react context
+    }
     return (
         <Box className = {styles.root}>
             <Box className = {styles.main}>
@@ -43,7 +54,7 @@ export default function OrderScreen () {
                     <ListItem
                       key={category.name}
                       button
-                     
+                     onClick = {() => categoryHandler(category.name)}
                     >
                       <Avatar alt={category.name} src={category.image} />
                     </ListItem>
@@ -53,8 +64,65 @@ export default function OrderScreen () {
             </List>
                 </Grid>
                 <Grid item md={10}>
-                    Food List
-                </Grid>
+                  <Typography
+                    gutterBottom
+                    className={styles.title}
+                    variant="h2"
+                    component="h2"
+                    >
+                    {categoryName || 'Main Menu'}
+                  </Typography>
+                   <Grid container spacing={1}>
+                     {loadingProducts ? (
+                       <CircularProgress/>
+                       ) : errorProducts ? (
+                         <Alert severity = "error"> {errorProducts}</Alert>
+                       ) :(
+                         products.map((product) => (
+                           <Grid item md ={6}>
+                           <Card className={styles.card} >
+                          <CardActionArea>
+                            <CardMedia
+                              component = "img"
+                              alt={product.name}
+                              image = {product.image}
+                              className ={styles.media}>
+
+                            </CardMedia>
+                          </CardActionArea>
+                          <CardContent>
+                          <Typography
+                    gutterBottom
+                    variant="body2"
+                    color="textPrimary"
+                    component="p"
+                    >
+                    {product.name}
+                  </Typography>
+                  <Box className={styles.cardFooter}>
+                   <Typography
+                        variant= "body2"
+                        color ="textSecondary"
+                        component="p"
+                        >
+                          {product.calorie} Calories
+                    </Typography>
+                    <Typography
+                        variant= "body2"
+                        color ="textSecondary"
+                        component="p"
+                        >
+                          {product.price}
+                    </Typography>         
+                  </Box>
+                          </CardContent>
+                           </Card>
+                           </Grid>
+                           )
+                           )
+                       )}
+                   </Grid>
+                </Grid >
                 </Grid>
             </Box>
         </Box>
