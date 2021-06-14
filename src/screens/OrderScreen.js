@@ -47,7 +47,7 @@ export default function OrderScreen () {
                 <Alert severity="error">{error}</Alert>
               ) : (
                 <>
-                  <ListItem button>
+                  <ListItem onClick={()=> categoryHandler('')} button>
                     <Logo></Logo>
                   </ListItem>
                   { categories.map((category) => (
