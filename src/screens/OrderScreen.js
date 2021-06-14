@@ -1,5 +1,6 @@
-import { Avatar, Box, Card, CardActionArea, CardContent, CardMedia, CircularProgress, Grid, List, ListItem, Typography } from '@material-ui/core';
+import { Avatar, Box, Button, Card, CardActionArea, CardContent, CardMedia, CircularProgress, Dialog, DialogTitle, Grid, List, ListItem, Typography } from '@material-ui/core';
 import { AddAlert } from '@material-ui/icons';
+import RemoveIcon from '@material-ui/icons/Remove';
 import { Alert } from '@material-ui/lab';
 import React, { useContext, useEffect, useState } from 'react'
 import { listCategories, listProducts } from '../actions';
@@ -37,6 +38,27 @@ export default function OrderScreen () {
     }
     return (
         <Box className = {styles.root}>
+          <Dialog
+            maxWidth ="sm"
+            fullWidth = {true}
+            open ={isOpen}
+            onClose={closeHandler}
+            >
+              <DialogTitle
+                className={styles.center}>
+                  Add {product.name}
+                </DialogTitle>
+                <Box className ={[styles.row, styles.center]}>
+                    <Button
+                    variant ="contained"
+                    color ="primary"
+                    disabled={quantity === 1}
+                    onClick ={(e) => quantity > 1 && setQuantity(quantity-1)}
+                    >
+                      <RemoveIcon />
+                    </Button>
+                </Box>
+            </Dialog>
             <Box className = {styles.main}>
                 <Grid container>
                 <Grid item md={2}>
