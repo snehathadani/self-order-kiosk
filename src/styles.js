@@ -45,6 +45,9 @@ export const useStyles = makeStyles((theme)=> ({
     card: {
         margin: 10, //create space between two cards so add padding
     },
+    title: {
+        marginTop: 18,
+    },
     space: {
         padding: 10, //to add space between cards
     },
