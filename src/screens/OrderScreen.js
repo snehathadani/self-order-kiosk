@@ -33,7 +33,7 @@ export default function OrderScreen () {
     }, [dispatch, categoryName, categories])
     const  categoryHandler = (name) => {
       setCategoryName(name)
-      listProducts(dispatch, categoryName) //dispatch comes from react context
+     // listProducts(dispatch, categoryName) //dispatch comes from react context
     }
     return (
         <Box className = {styles.root}>
