@@ -1,82 +1,173 @@
-import { Avatar, Box, Button, Card, CardActionArea, CardContent, CardMedia, CircularProgress, Dialog, DialogTitle, Grid, List, ListItem, Typography } from '@material-ui/core';
-import { AddAlert } from '@material-ui/icons';
+import React, { useContext, useEffect, useState } from 'react';
+import { Store } from '../Store';
+import {
+  addToOrder,
+  clearOrder,
+  listCategories,
+  listProducts,
+  removeFromOrder,
+} from '../actions';
+import {
+  Avatar,
+  Box,
+  Button,
+  Card,
+  CardActionArea,
+  CardContent,
+  CardMedia,
+  CircularProgress,
+  Dialog,
+  DialogTitle,
+  Grid,
+  List,
+  ListItem,
+  Slide,
+  TextField,
+  Typography,
+} from '@material-ui/core';
+import AddIcon from '@material-ui/icons/Add';
 import RemoveIcon from '@material-ui/icons/Remove';
 import { Alert } from '@material-ui/lab';
-import React, { useContext, useEffect, useState } from 'react'
-import { listCategories, listProducts } from '../actions';
+import { useStyles } from '../styles';
 import Logo from '../components/Logo';
-import { Store } from '../Store';
-import { useStyles } from '../styles'
+export default function OrderScreen(props) {
+  const styles = useStyles();
+  const { state, dispatch } = useContext(Store);
+  const { categories, loading, error } = state.categoryList;
+  const {
+    products,
+    loading: loadingProducts,
+    error: errorProducts,
+  } = state.productList;
+  const {
+    orderItems,
+    itemsCount,
+    totalPrice,
+    taxPrice,
+    orderType,
+  } = state.order;
 
-
-/*
-First create a box this will be a root box
-Then inside that box create a main box
-Then inside the main box create a Grid container. This Grid has 2 columns 1st column for categories & 2nd column for foods 
-Then fill categories for backend inside Grid, for that make a List*/
-
-export default function OrderScreen () {
-    //console.log("called once")
-    const [categoryName, setCategoryName] = useState('')
-    const styles = useStyles();
-    const {state, dispatch} = useContext(Store)
-    const {categories, loading, error} = state.categoryList;
-    const {products, loading:loadingProducts, error: errorProducts} = state.productList
-    console.log(state)
-    useEffect(()=> {
-        console.log("uuuu")
-        if(!categories){
-          listCategories(dispatch);
-        } else {
-          listProducts(dispatch, categoryName)
-        }
-       
-    }, [dispatch, categoryName, categories])
-    const  categoryHandler = (name) => {
-      setCategoryName(name)
-     // listProducts(dispatch, categoryName) //dispatch comes from react context
+  const [categoryName, setCategoryName] = useState('');
+const [quantity, setQuantity] = useState(1);
+  const [isOpen, setIsOpen] = useState(false);
+  const [product, setProduct] = useState({});
+  const closeHandler = () => {
+    setIsOpen(false);
+  };
+  const productClickHandler = (p) => {
+    setProduct(p);
+    setIsOpen(true);
+  };
+  const addToOrderHandler = () => {
+    addToOrder(dispatch, { ...product, quantity });
+    setIsOpen(false);
+  };
+  const cancelOrRemoveFromOrder = () => {
+    removeFromOrder(dispatch, product);
+    setIsOpen(false);
+  };
+  const previewOrderHandler = () => {
+    props.history.push(`/review`);
+  };
+  useEffect(() => {
+    if (!categories) {
+      listCategories(dispatch);
+    } else {
+      listProducts(dispatch, categoryName);
     }
-    return (
-        <Box className = {styles.root}>
-          <Dialog
-            maxWidth ="sm"
-            fullWidth = {true}
-            open ={isOpen}
-            onClose={closeHandler}
+  }, [categories, categoryName]);
+
+  const categoryClickHandler = (name) => {
+    setCategoryName(name);
+    listProducts(dispatch, categoryName);
+  };
+
+  return (
+    <Box className={styles.root}>
+      <Box className={styles.main}>
+        <Dialog
+          onClose={closeHandler}
+          aria-labelledby="max-width-dialog-title"
+          open={isOpen}
+          fullWidth={true}
+          maxWidth="sm"
+        >
+          <DialogTitle className={styles.center}>
+            Add {product.name}
+          </DialogTitle>
+          <Box className={[styles.row, styles.center]}>
+            <Button
+              variant="contained"
+              color="primary"
+              disabled={quantity === 1}
+              onClick={(e) => quantity > 1 && setQuantity(quantity - 1)}
             >
-              <DialogTitle
-                className={styles.center}>
-                  Add {product.name}
-                </DialogTitle>
-                <Box className ={[styles.row, styles.center]}>
-                    <Button
-                    variant ="contained"
-                    color ="primary"
-                    disabled={quantity === 1}
-                    onClick ={(e) => quantity > 1 && setQuantity(quantity-1)}
-                    >
-                      <RemoveIcon />
-                    </Button>
-                </Box>
-            </Dialog>
-            <Box className = {styles.main}>
-                <Grid container>
-                <Grid item md={2}>
-                <List>
+              <RemoveIcon />
+            </Button>
+            <TextField
+              inputProps={{ className: styles.largeInput }}
+              InputProps={{
+                bar: true,
+                inputProps: {
+                  className: styles.largeInput,
+                },
+              }}
+              className={styles.largeNumber}
+              type="number"
+              variant="filled"
+              min={1}
+              value={quantity}
+            />
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={(e) => setQuantity(quantity + 1)}
+            >
+              <AddIcon />
+            </Button>
+          </Box>
+          <Box className={[styles.row, styles.around]}>
+            <Button
+              onClick={cancelOrRemoveFromOrder}
+              variant="contained"
+              color="primary"
+              size="large"
+              className={styles.largeButton}
+            >
+              {orderItems.find((x) => x.name === product.name)
+                ? 'Remove From Order'
+                : 'Cancel'}
+            </Button>
+
+            <Button
+              onClick={addToOrderHandler}
+              variant="contained"
+              color="primary"
+              size="large"
+              className={styles.largeButton}
+            >
+              ADD To Order
+            </Button>
+          </Box>
+        </Dialog>
+
+        <Grid container>
+          <Grid item md={2}>
+            <List>
               {loading ? (
                 <CircularProgress />
               ) : error ? (
                 <Alert severity="error">{error}</Alert>
               ) : (
                 <>
-                  <ListItem onClick={()=> categoryHandler('')} button>
+                  <ListItem button onClick={() => categoryClickHandler('')}>
                     <Logo></Logo>
                   </ListItem>
-                  { categories.map((category) => (
+                  {categories.map((category) => (
                     <ListItem
                       key={category.name}
                       button
-                     onClick = {() => categoryHandler(category.name)}
+                      onClick={() => categoryClickHandler(category.name)}
                     >
                       <Avatar alt={category.name} src={category.image} />
                     </ListItem>
@@ -84,70 +175,104 @@ export default function OrderScreen () {
                 </>
               )}
             </List>
-                </Grid>
-                <Grid item md={10}>
-                  <Typography
-                    gutterBottom
-                    className={styles.title}
-                    variant="h2"
-                    component="h2"
-                    >
-                    {categoryName || 'Main Menu'}
-                  </Typography>
-                   <Grid container spacing={1}>
-                     {loadingProducts ? (
-                       <CircularProgress/>
-                       ) : errorProducts ? (
-                         <Alert severity = "error"> {errorProducts}</Alert>
-                       ) :(
-                         products.map((product) => (
-                           <Grid item md ={6}>
-                           <Card className={styles.card} >
-                          <CardActionArea>
-                            <CardMedia
-                              component = "img"
-                              alt={product.name}
-                              image = {product.image}
-                              className ={styles.media}>
+          </Grid>
+          <Grid item md={10}>
+            <Typography
+              gutterBottom
+              className={styles.title}
+              variant="h2"
+              component="h2"
+            >
+              {categoryName || 'Main Menu'}
+            </Typography>
 
-                            </CardMedia>
-                          </CardActionArea>
+            <Grid container spacing={1}>
+              {loadingProducts ? (
+                <CircularProgress />
+              ) : errorProducts ? (
+                <Alert severity="error">{errorProducts}</Alert>
+              ) : (
+                products.map((product) => (
+                  <Slide key={product.name} direction="up" in={true}>
+                    <Grid item md={6}>
+                      <Card
+                        className={styles.card}
+                        onClick={() => productClickHandler(product)}
+                      >
+                        <CardActionArea>
+                          <CardMedia
+                            component="img"
+                            alt={product.name}
+                            image={product.image}
+                            className={styles.media}
+                          />
                           <CardContent>
-                          <Typography
-                    gutterBottom
-                    variant="body2"
-                    color="textPrimary"
-                    component="p"
-                    >
-                    {product.name}
-                  </Typography>
-                  <Box className={styles.cardFooter}>
-                   <Typography
-                        variant= "body2"
-                        color ="textSecondary"
-                        component="p"
-                        >
-                          {product.calorie} Calories
-                    </Typography>
-                    <Typography
-                        variant= "body2"
-                        color ="textSecondary"
-                        component="p"
-                        >
-                          {product.price}
-                    </Typography>         
-                  </Box>
+                            <Typography
+                              gutterBottom
+                              variant="body2"
+                              color="textPrimary"
+                              component="p"
+                            >
+                              {product.name}
+                            </Typography>
+                            <Box className={styles.cardFooter}>
+                              <Typography
+                                variant="body2"
+                                color="textSecondary"
+                                component="p"
+                              >
+                                {product.calorie} Cal
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                color="textPrimary"
+                                component="p"
+                              >
+                                ${product.price}
+                              </Typography>
+                            </Box>
                           </CardContent>
-                           </Card>
-                           </Grid>
-                           )
-                           )
-                       )}
-                   </Grid>
-                </Grid >
-                </Grid>
-            </Box>
-        </Box>
-    )
-}
+                        </CardActionArea>
+                      </Card>
+                    </Grid>
+                  </Slide>
+                ))
+              )}
+            </Grid>
+          </Grid>
+        </Grid>
+      </Box>
+      <Box>
+        <Box>
+          <Box className={[styles.bordered, styles.space]}>
+            My Order - {orderType} | Tax: ${taxPrice} | Total: ${totalPrice} |
+            Items: {itemsCount}
+          </Box>
+          <Box className={[styles.row, styles.around]}>
+            <Button
+              onClick={() => {
+                clearOrder(dispatch);
+                props.history.push(`/`);
+              }}
+              variant="contained"
+              color="primary"
+              className={styles.largeButton}
+            >
+              Cancel Order
+            </Button>
 
+            <Button
+              onClick={previewOrderHandler}
+              variant="contained"
+              color="primary"
+              disabled={orderItems.length === 0}
+              className={styles.largeButton}
+            >
+              Done
+            </Button>
+          </Box>
+        </Box>
+      </Box>
+    </Box>
+  );
+}
